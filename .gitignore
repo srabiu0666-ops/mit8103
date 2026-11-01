@@ -1,0 +1,16 @@
+# Environment and OS files
+.DS_Store
+Thumbs.db
+*.tmp
+*.log
+!**/evidence/*.log
+
+# Editor configurations
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Database dumps and local credentials
+*.env
+*.local.sql
