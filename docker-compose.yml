@@ -1,0 +1,57 @@
+services:
+  # Primary PostgreSQL 16 database for EkoStay Hospitality Group
+  ekostay-postgres:
+    image: postgres:16-alpine
+    container_name: ekostay-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-ekostay_db}
+      POSTGRES_USER: ${POSTGRES_USER:-ekostay_admin}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-EkoStaySecure2026!}
+      PGDATA: /var/lib/postgresql/data/pgdata
+    ports:
+      - "${POSTGRES_PORT:-5436}:5432"
+    volumes:
+      - ekostay_postgres_data:/var/lib/postgresql/data
+      - ./portfolio-1-database-design/01-schema.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
+      - ./portfolio-1-database-design/02-constraints.sql:/docker-entrypoint-initdb.d/02-constraints.sql:ro
+      - ./portfolio-1-database-design/03-seed-data.sql:/docker-entrypoint-initdb.d/03-seed-data.sql:ro
+      - ./portfolio-1-database-design:/portfolio-1:ro
+      - ./portfolio-2-query-optimisation:/portfolio-2:ro
+      - ./portfolio-3-transactions-concurrency:/portfolio-3:ro
+      - ./portfolio-5-distributed-cloud:/portfolio-5:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-ekostay_admin} -d ${POSTGRES_DB:-ekostay_db}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - ekostay_network
+
+  # MongoDB 7.0 document store for smart room IoT telemetry and guest concierge requests
+  ekostay-mongo:
+    image: mongo:7.0
+    container_name: ekostay-mongo
+    restart: unless-stopped
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_USER:-ekostay_mongo}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_PASSWORD:-EkoStayMongo2026!}
+      MONGO_INITDB_DATABASE: ${MONGO_DB:-ekostay_nosql}
+    ports:
+      - "${MONGO_PORT:-27020}:27017"
+    volumes:
+      - ekostay_mongo_data:/data/db
+      - ./portfolio-4-nosql:/portfolio-4:ro
+    networks:
+      - ekostay_network
+
+volumes:
+  ekostay_postgres_data:
+    name: ekostay_postgres_data
+  ekostay_mongo_data:
+    name: ekostay_mongo_data
+
+networks:
+  ekostay_network:
+    name: ekostay_network
+    driver: bridge
