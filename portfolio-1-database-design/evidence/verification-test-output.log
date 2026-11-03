@@ -1,0 +1,59 @@
+          entity          | total_records 
+--------------------------+---------------
+ loyalty_tiers            |             4
+ room_categories          |             5
+ guests                   |            12
+ rooms                    |            14
+ bookings                 |             8
+ payments                 |             8
+ checkin_checkout_records |             5
+ audit_logs               |             2
+(8 rows)
+
+ room_number |      wing       | floor_number | category_code |     category_name      | base_nightly_rate | max_occupancy |  room_status   
+-------------+-----------------+--------------+---------------+------------------------+-------------------+---------------+----------------
+ A101        | GARDEN_WING     |            1 | STD-KING      | Classic Standard King  |          85000.00 |             2 | AVAILABLE
+ A102        | GARDEN_WING     |            1 | STD-KING      | Classic Standard King  |          85000.00 |             2 | AVAILABLE
+ A103        | GARDEN_WING     |            1 | STD-KING      | Classic Standard King  |          85000.00 |             2 | DIRTY_CLEANING
+ B201        | LAGOON_WING     |            2 | DLX-LAGOON    | Deluxe Lagoon View     |         135000.00 |             2 | OCCUPIED
+ B202        | LAGOON_WING     |            2 | DLX-LAGOON    | Deluxe Lagoon View     |         135000.00 |             2 | AVAILABLE
+ B203        | LAGOON_WING     |            2 | DLX-LAGOON    | Deluxe Lagoon View     |         135000.00 |             2 | AVAILABLE
+ C301        | ATLANTIC_WING   |            3 | EXEC-TWIN     | Executive Club Twin    |         165000.00 |             3 | OCCUPIED
+ C302        | ATLANTIC_WING   |            3 | EXEC-TWIN     | Executive Club Twin    |         165000.00 |             3 | AVAILABLE
+ C303        | ATLANTIC_WING   |            3 | EXEC-TWIN     | Executive Club Twin    |         165000.00 |             3 | OUT_OF_ORDER
+ D401        | EXECUTIVE_TOWER |            4 | DIPL-SUITE    | Diplomatic Suite       |         280000.00 |             4 | AVAILABLE
+ D402        | EXECUTIVE_TOWER |            4 | DIPL-SUITE    | Diplomatic Suite       |         280000.00 |             4 | OCCUPIED
+ D403        | EXECUTIVE_TOWER |            4 | DIPL-SUITE    | Diplomatic Suite       |         280000.00 |             4 | AVAILABLE
+ E501        | EXECUTIVE_TOWER |            5 | PRES-PENT     | Presidential Penthouse |         650000.00 |             6 | AVAILABLE
+ E502        | EXECUTIVE_TOWER |            5 | PRES-PENT     | Presidential Penthouse |         650000.00 |             6 | AVAILABLE
+(14 rows)
+
+   booking_reference   |     guest_name     |    tier_name     | room_number | check_in_date | check_out_date | folio_total  |   payment_reference   | gateway_provider | amount_paid  | payment_status | booking_status 
+-----------------------+--------------------+------------------+-------------+---------------+----------------+--------------+-----------------------+------------------+--------------+----------------+----------------
+ EKO-RES-20261001-0001 | Tunde Bakare       | Gold Ambassador  | A101        | 2026-10-02    | 2026-10-05     |  258187.5000 | EKO-PAY-20261001-0001 | PAYSTACK         |  258187.5000 | COMPLETED      | CHECKED_OUT
+ EKO-RES-20261003-0002 | Ngozi Achebe       | Silver Executive | B202        | 2026-10-04    | 2026-10-06     |  288562.5000 | EKO-PAY-20261003-0002 | FLUTTERWAVE      |  288562.5000 | COMPLETED      | CHECKED_OUT
+ EKO-RES-20261010-0003 | Ibrahim Suleiman   | Platinum Royal   | D402        | 2026-10-12    | 2026-10-16     | 1071000.0000 | EKO-PAY-20261010-0003 | NIBSS_NIP_DIRECT | 1071000.0000 | COMPLETED      | CHECKED_IN
+ EKO-RES-20261011-0004 | Chinedu Okafor     | Silver Executive | B201        | 2026-10-13    | 2026-10-16     |  432843.7500 | EKO-PAY-20261011-0004 | MONIEPOINT_POS   |  432843.7500 | COMPLETED      | CHECKED_IN
+ EKO-RES-20261012-0005 | Funke Williams     | Gold Ambassador  | C301        | 2026-10-14    | 2026-10-16     |  334125.0000 | EKO-PAY-20261012-0005 | PAYSTACK         |  334125.0000 | COMPLETED      | CHECKED_IN
+ EKO-RES-20261014-0006 | Segun Adeleke      | Platinum Royal   | E501        | 2026-11-01    | 2026-11-03     | 1243125.0000 | EKO-PAY-20261014-0006 | NIBSS_NIP_DIRECT | 1243125.0000 | COMPLETED      | CONFIRMED
+ EKO-RES-20261015-0007 | Folashade Ogundipe | Gold Ambassador  | D401        | 2026-11-05    | 2026-11-08     |  850500.0000 | EKO-PAY-20261015-0007 | FLUTTERWAVE      |  850500.0000 | COMPLETED      | CONFIRMED
+ EKO-RES-20261016-0008 | Zainab Mohammed    | Classic Guest    | A102        | 2026-10-20    | 2026-10-22     |  191250.0000 | EKO-PAY-20261016-0008 | INTERSWITCH_POS  |  191250.0000 | FAILED         | CANCELLED
+(8 rows)
+
+psql:/portfolio-1/04-verification-tests.sql:84: NOTICE:  SUCCESS (Test 4A): Invalid booking date range correctly blocked by chk_booking_dates.
+psql:/portfolio-1/04-verification-tests.sql:96: NOTICE:  SUCCESS (Test 4B): Invalid room number format correctly blocked by chk_room_number_format.
+DO
+DO
+psql:/portfolio-1/04-verification-tests.sql:108: NOTICE:  SUCCESS (Test 4C): Duplicate guest phone number correctly blocked by unique constraint.
+DO
+psql:/portfolio-1/04-verification-tests.sql:128: NOTICE:  SUCCESS (Test 4D): Booking on OUT_OF_ORDER room correctly blocked by trigger: Booking rejected: Room C303 (b0000000-0000-0000-0000-000000000009) is currently in OUT_OF_ORDER maintenance status.
+DO
+   keycard_code    |    guest_name    |    tier_name     | late_checkout_hours | room_number |     category_name     |   actual_check_in_at   |  actual_check_out_at   | deposit_held | room_inspection_status 
+-------------------+------------------+------------------+---------------------+-------------+-----------------------+------------------------+------------------------+--------------+------------------------
+ KC-BLE-C301-7740  | Funke Williams   | Gold Ambassador  |                   2 | C301        | Executive Club Twin   | 2026-10-14 10:15:00+00 |                        |     50000.00 | PENDING_INSPECTION
+ KC-BLE-B201-3319  | Chinedu Okafor   | Silver Executive |                   1 | B201        | Deluxe Lagoon View    | 2026-10-13 14:20:00+00 |                        |     50000.00 | PENDING_INSPECTION
+ KC-BLE-D402-1042  | Ibrahim Suleiman | Platinum Royal   |                   4 | D402        | Diplomatic Suite      | 2026-10-12 13:05:00+00 |                        |    100000.00 | PENDING_INSPECTION
+ KC-RFID-B202-9914 | Ngozi Achebe     | Silver Executive |                   1 | B202        | Deluxe Lagoon View    | 2026-10-04 14:00:00+00 | 2026-10-06 10:45:00+00 |     50000.00 | MINIBAR_BILLED
+ KC-RFID-A101-8821 | Tunde Bakare     | Gold Ambassador  |                   2 | A101        | Classic Standard King | 2026-10-02 13:10:00+00 | 2026-10-05 12:30:00+00 |     30000.00 | CLEARED_NO_DAMAGE
+(5 rows)
+

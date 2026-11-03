@@ -1,0 +1,126 @@
+erDiagram
+    loyalty_tiers ||--o{ guests : "governs loyalty tier"
+    room_categories ||--o{ rooms : "classifies tariff & capacity"
+    guests ||--o{ bookings : "places reservations"
+    rooms ||--o{ bookings : "allocated to"
+    bookings ||--o{ payments : "settled via"
+    guests ||--o{ payments : "pays folio"
+    bookings ||--o| checkin_checkout_records : "tracks physical stay"
+    rooms ||--o{ checkin_checkout_records : "occupied during stay"
+    guests ||--o{ checkin_checkout_records : "checked in guest"
+
+    loyalty_tiers {
+        int tier_level PK
+        string tier_name UK
+        int min_nights_required
+        numeric discount_percentage
+        int late_checkout_hours
+        int max_active_bookings
+        text description
+        timestamp created_at
+    }
+
+    guests {
+        uuid guest_id PK
+        string first_name
+        string last_name
+        string email UK
+        string phone_number UK
+        string nin_hash UK
+        string passport_hash UK
+        string nationality
+        int loyalty_tier FK
+        string guest_status
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    room_categories {
+        serial category_id PK
+        string category_code UK
+        string category_name UK
+        numeric base_nightly_rate
+        numeric caution_deposit_amount
+        int max_occupancy
+        string bed_configuration
+        int square_meters
+        text description
+        timestamp created_at
+    }
+
+    rooms {
+        uuid room_id PK
+        string room_number UK
+        int category_id FK
+        int floor_number
+        string wing
+        string room_status
+        boolean is_smoking
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    bookings {
+        uuid booking_id PK
+        string booking_reference UK
+        uuid guest_id FK
+        uuid room_id FK
+        date check_in_date
+        date check_out_date
+        int num_guests
+        numeric nightly_rate_applied
+        numeric discount_amount
+        numeric subtotal_amount
+        numeric tax_amount
+        numeric total_amount
+        string booking_status
+        string booking_channel
+        string special_requests
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    payments {
+        uuid payment_id PK
+        string payment_reference UK
+        uuid booking_id FK
+        uuid guest_id FK
+        string payment_method
+        string gateway_provider
+        string gateway_session_id UK
+        string currency
+        numeric amount_paid
+        numeric processing_fee
+        string payment_status
+        string narration
+        timestamp paid_at
+    }
+
+    checkin_checkout_records {
+        uuid record_id PK
+        uuid booking_id FK
+        uuid room_id FK
+        uuid guest_id FK
+        timestamp actual_check_in_at
+        timestamp actual_check_out_at
+        string keycard_code
+        numeric deposit_held
+        numeric late_checkout_fee
+        string checked_in_by
+        string checked_out_by
+        string room_inspection_status
+        text front_desk_notes
+        timestamp created_at
+    }
+
+    audit_logs {
+        bigserial log_id PK
+        string table_name
+        string record_id
+        string action
+        jsonb old_state
+        jsonb new_state
+        string changed_by
+        string client_ip
+        timestamp created_at
+    }
