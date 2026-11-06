@@ -1,0 +1,213 @@
+                                                                                            QUERY PLAN                                                                                            
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Sort  (cost=340.13..340.17 rows=14 width=134) (actual time=20.331..20.393 rows=121 loops=1)
+   Output: g.guest_id, ((((g.first_name)::text || ' '::text) || (g.last_name)::text)), g.email, (count(b.booking_id)), (sum(b.total_amount)), (max(b.check_in_date)), g.first_name, g.last_name
+   Sort Key: (sum(b.total_amount)) DESC
+   Sort Method: quicksort  Memory: 40kB
+   Buffers: shared hit=66
+   ->  HashAggregate  (cost=337.66..339.87 rows=14 width=134) (actual time=18.636..19.191 rows=121 loops=1)
+         Output: g.guest_id, (((g.first_name)::text || ' '::text) || (g.last_name)::text), g.email, count(b.booking_id), sum(b.total_amount), max(b.check_in_date), g.first_name, g.last_name
+         Group Key: g.guest_id
+         Filter: ((count(b.booking_id) >= 3) AND (sum(b.total_amount) > 500000.0000))
+         Batches: 1  Memory Usage: 96kB
+         Buffers: shared hit=63
+         ->  Hash Join  (cost=8.15..324.59 rows=1307 width=85) (actual time=1.007..14.209 rows=1346 loops=1)
+               Output: g.guest_id, g.first_name, g.last_name, g.email, b.booking_id, b.total_amount, b.check_in_date
+               Inner Unique: true
+               Hash Cond: (b.guest_id = g.guest_id)
+               Buffers: shared hit=63
+               ->  Index Only Scan using idx_bookings_checkin_channel_covering on public.bookings b  (cost=0.41..313.29 rows=1307 width=43) (actual time=0.190..9.955 rows=1346 loops=1)
+                     Output: b.check_in_date, b.booking_status, b.booking_channel, b.booking_id, b.guest_id, b.room_id, b.subtotal_amount, b.tax_amount, b.total_amount, b.check_out_date
+                     Index Cond: ((b.check_in_date >= '2026-08-01'::date) AND (b.check_in_date <= '2026-08-31'::date))
+                     Filter: (((b.booking_channel)::text = ANY ('{CORPORATE_DESK,OTA_BOOKING_COM}'::text[])) AND ((b.booking_status)::text = ANY ('{CHECKED_OUT,CHECKED_IN,CONFIRMED}'::text[])))
+                     Rows Removed by Filter: 2018
+                     Heap Fetches: 0
+                     Buffers: shared hit=58
+               ->  Hash  (cost=6.22..6.22 rows=122 width=58) (actual time=0.656..0.662 rows=122 loops=1)
+                     Output: g.guest_id, g.first_name, g.last_name, g.email
+                     Buckets: 1024  Batches: 1  Memory Usage: 19kB
+                     Buffers: shared hit=5
+                     ->  Seq Scan on public.guests g  (cost=0.00..6.22 rows=122 width=58) (actual time=0.055..0.241 rows=122 loops=1)
+                           Output: g.guest_id, g.first_name, g.last_name, g.email
+                           Buffers: shared hit=5
+ Planning:
+   Buffers: shared hit=530
+ Planning Time: 66.925 ms
+ Execution Time: 22.440 ms
+(34 rows)
+
+                                                                                   QUERY PLAN                                                                                   
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Sort  (cost=468.26..468.45 rows=75 width=107) (actual time=11.319..11.336 rows=10 loops=1)
+   Output: p.gateway_provider, p.payment_method, p.payment_status, (count(p.payment_id)), (sum(p.amount_paid)), (round(avg(p.amount_paid), 2))
+   Sort Key: (sum(p.amount_paid)) DESC
+   Sort Method: quicksort  Memory: 25kB
+   Buffers: shared hit=810
+   ->  HashAggregate  (cost=464.61..465.92 rows=75 width=107) (actual time=11.082..11.178 rows=10 loops=1)
+         Output: p.gateway_provider, p.payment_method, p.payment_status, count(p.payment_id), sum(p.amount_paid), round(avg(p.amount_paid), 2)
+         Group Key: p.gateway_provider, p.payment_method, p.payment_status
+         Batches: 1  Memory Usage: 24kB
+         Buffers: shared hit=810
+         ->  Nested Loop  (cost=0.56..459.64 rows=398 width=58) (actual time=0.299..8.690 rows=400 loops=1)
+               Output: p.gateway_provider, p.payment_method, p.payment_status, p.payment_id, p.amount_paid
+               Inner Unique: true
+               Buffers: shared hit=810
+               ->  Index Only Scan using idx_payments_exceptions_partial on public.payments p  (cost=0.28..39.24 rows=398 width=74) (actual time=0.120..1.279 rows=400 loops=1)
+                     Output: p.paid_at, p.gateway_provider, p.payment_method, p.payment_status, p.payment_id, p.booking_id, p.amount_paid
+                     Index Cond: (p.paid_at >= '2026-05-31 23:00:00+00'::timestamp with time zone)
+                     Heap Fetches: 0
+                     Buffers: shared hit=9
+               ->  Index Only Scan using bookings_pkey on public.bookings b  (cost=0.29..1.06 rows=1 width=16) (actual time=0.014..0.014 rows=1 loops=400)
+                     Output: b.booking_id
+                     Index Cond: (b.booking_id = p.booking_id)
+                     Heap Fetches: 0
+                     Buffers: shared hit=801
+ Planning:
+   Buffers: shared hit=158
+ Planning Time: 27.143 ms
+ Execution Time: 12.080 ms
+(28 rows)
+
+                                                                                              QUERY PLAN                                                                                               
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Sort  (cost=20.36..20.53 rows=69 width=121) (actual time=3.422..3.474 rows=70 loops=1)
+   Output: b.check_in_date, b.check_out_date, b.booking_reference, b.booking_channel, b.booking_status, b.subtotal_amount, b.tax_amount, b.total_amount, (sum(b.total_amount) OVER (?)), b.room_id
+   Sort Key: b.check_in_date DESC
+   Sort Method: quicksort  Memory: 33kB
+   Buffers: shared hit=14
+   ->  WindowAgg  (cost=16.87..18.25 rows=69 width=121) (actual time=1.873..2.730 rows=70 loops=1)
+         Output: b.check_in_date, b.check_out_date, b.booking_reference, b.booking_channel, b.booking_status, b.subtotal_amount, b.tax_amount, b.total_amount, sum(b.total_amount) OVER (?), b.room_id
+         Buffers: shared hit=11
+         ->  Sort  (cost=16.87..17.05 rows=69 width=89) (actual time=1.766..1.819 rows=70 loops=1)
+               Output: b.check_in_date, b.room_id, b.check_out_date, b.booking_reference, b.booking_channel, b.booking_status, b.subtotal_amount, b.tax_amount, b.total_amount
+               Sort Key: b.room_id, b.check_in_date
+               Sort Method: quicksort  Memory: 33kB
+               Buffers: shared hit=11
+               ->  Nested Loop  (cost=0.68..14.77 rows=69 width=89) (actual time=0.722..0.929 rows=70 loops=1)
+                     Output: b.check_in_date, b.room_id, b.check_out_date, b.booking_reference, b.booking_channel, b.booking_status, b.subtotal_amount, b.tax_amount, b.total_amount
+                     Buffers: shared hit=8
+                     ->  Index Only Scan using idx_rooms_number_covering on public.rooms r  (cost=0.27..4.29 rows=1 width=16) (actual time=0.221..0.228 rows=1 loops=1)
+                           Output: r.room_number, r.room_id, r.category_id, r.wing, r.room_status
+                           Index Cond: (r.room_number = 'A101'::bpchar)
+                           Heap Fetches: 0
+                           Buffers: shared hit=3
+                     ->  Index Only Scan using idx_bookings_room_checkin_composite on public.bookings b  (cost=0.41..9.79 rows=69 width=89) (actual time=0.469..0.585 rows=70 loops=1)
+                           Output: b.room_id, b.check_in_date, b.check_out_date, b.booking_reference, b.booking_channel, b.booking_status, b.subtotal_amount, b.tax_amount, b.total_amount
+                           Index Cond: ((b.room_id = r.room_id) AND (b.check_in_date >= '2026-05-01'::date))
+                           Heap Fetches: 0
+                           Buffers: shared hit=5
+ Planning:
+   Buffers: shared hit=131
+ Planning Time: 16.989 ms
+ Execution Time: 5.037 ms
+(30 rows)
+
+                                                                                                                   QUERY PLAN                                                                                                                    
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Limit  (cost=11.03..11.04 rows=1 width=114) (actual time=0.908..0.922 rows=0 loops=1)
+   Output: ((((g.first_name)::text || ' '::text) || (g.last_name)::text)), g.phone_number, lt.tier_name, lt.max_active_bookings, agb.active_booking_count, ((agb.active_booking_count - lt.max_active_bookings)), agb.active_folio_total
+   Buffers: shared hit=11
+   ->  Sort  (cost=11.03..11.04 rows=1 width=114) (actual time=0.904..0.917 rows=0 loops=1)
+         Output: ((((g.first_name)::text || ' '::text) || (g.last_name)::text)), g.phone_number, lt.tier_name, lt.max_active_bookings, agb.active_booking_count, ((agb.active_booking_count - lt.max_active_bookings)), agb.active_folio_total
+         Sort Key: agb.active_folio_total DESC
+         Sort Method: quicksort  Memory: 25kB
+         Buffers: shared hit=11
+         ->  Nested Loop  (cost=4.34..11.02 rows=1 width=114) (actual time=0.849..0.861 rows=0 loops=1)
+               Output: (((g.first_name)::text || ' '::text) || (g.last_name)::text), g.phone_number, lt.tier_name, lt.max_active_bookings, agb.active_booking_count, (agb.active_booking_count - lt.max_active_bookings), agb.active_folio_total
+               Inner Unique: true
+               Join Filter: (agb.active_booking_count > lt.max_active_bookings)
+               Rows Removed by Join Filter: 2
+               Buffers: shared hit=11
+               ->  Hash Join  (cost=4.21..10.76 rows=1 width=73) (actual time=0.599..0.766 rows=2 loops=1)
+                     Output: agb.active_booking_count, agb.active_folio_total, g.first_name, g.last_name, g.phone_number, g.loyalty_tier
+                     Inner Unique: true
+                     Hash Cond: (g.guest_id = agb.guest_id)
+                     Buffers: shared hit=7
+                     ->  Seq Scan on public.guests g  (cost=0.00..6.22 rows=122 width=49) (actual time=0.031..0.106 rows=122 loops=1)
+                           Output: g.guest_id, g.first_name, g.last_name, g.email, g.phone_number, g.nin_hash, g.passport_hash, g.nationality, g.loyalty_tier, g.guest_status, g.created_at, g.updated_at
+                           Buffers: shared hit=5
+                     ->  Hash  (cost=4.20..4.20 rows=1 width=56) (actual time=0.486..0.492 rows=2 loops=1)
+                           Output: agb.active_booking_count, agb.active_folio_total, agb.guest_id
+                           Buckets: 1024  Batches: 1  Memory Usage: 9kB
+                           Buffers: shared hit=2
+                           ->  Subquery Scan on agb  (cost=4.16..4.20 rows=1 width=56) (actual time=0.412..0.431 rows=2 loops=1)
+                                 Output: agb.active_booking_count, agb.active_folio_total, agb.guest_id
+                                 Buffers: shared hit=2
+                                 ->  GroupAggregate  (cost=4.16..4.19 rows=1 width=56) (actual time=0.408..0.424 rows=2 loops=1)
+                                       Output: b.guest_id, count(b.booking_id), sum(b.total_amount)
+                                       Group Key: b.guest_id
+                                       Buffers: shared hit=2
+                                       ->  Sort  (cost=4.16..4.17 rows=1 width=39) (actual time=0.362..0.366 rows=2 loops=1)
+                                             Output: b.guest_id, b.booking_id, b.total_amount
+                                             Sort Key: b.guest_id
+                                             Sort Method: quicksort  Memory: 25kB
+                                             Buffers: shared hit=2
+                                             ->  Index Only Scan using idx_bookings_status_guest_covering on public.bookings b  (cost=0.13..4.15 rows=1 width=39) (actual time=0.259..0.267 rows=2 loops=1)
+                                                   Output: b.guest_id, b.booking_id, b.total_amount
+                                                   Index Cond: (b.check_in_date >= '2026-10-15'::date)
+                                                   Heap Fetches: 0
+                                                   Buffers: shared hit=2
+               ->  Index Scan using loyalty_tiers_pkey on public.loyalty_tiers lt  (cost=0.13..0.25 rows=1 width=23) (actual time=0.033..0.035 rows=1 loops=2)
+                     Output: lt.tier_level, lt.tier_name, lt.min_nights_required, lt.discount_percentage, lt.late_checkout_hours, lt.max_active_bookings, lt.description, lt.created_at
+                     Index Cond: (lt.tier_level = g.loyalty_tier)
+                     Buffers: shared hit=4
+ Planning:
+   Buffers: shared hit=205
+ Planning Time: 20.390 ms
+ Execution Time: 1.898 ms
+(51 rows)
+
+                                                                                               QUERY PLAN                                                                                               
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Limit  (cost=27.46..27.49 rows=15 width=165) (actual time=1.162..1.182 rows=1 loops=1)
+   Output: r.room_number, rc.category_name, (count(b.booking_id)), (sum(b.subtotal_amount)), (sum(b.tax_amount)), (sum(b.total_amount)), (round(avg(b.total_amount), 2)), (max(b.check_out_date))
+   Buffers: shared hit=8
+   ->  Sort  (cost=27.46..27.59 rows=53 width=165) (actual time=1.156..1.172 rows=1 loops=1)
+         Output: r.room_number, rc.category_name, (count(b.booking_id)), (sum(b.subtotal_amount)), (sum(b.tax_amount)), (sum(b.total_amount)), (round(avg(b.total_amount), 2)), (max(b.check_out_date))
+         Sort Key: (sum(b.total_amount)) DESC
+         Sort Method: quicksort  Memory: 25kB
+         Buffers: shared hit=8
+         ->  HashAggregate  (cost=24.96..26.16 rows=53 width=165) (actual time=1.090..1.106 rows=1 loops=1)
+               Output: r.room_number, rc.category_name, count(b.booking_id), sum(b.subtotal_amount), sum(b.tax_amount), sum(b.total_amount), round(avg(b.total_amount), 2), max(b.check_out_date)
+               Group Key: r.room_number, rc.category_name
+               Batches: 1  Memory Usage: 24kB
+               Buffers: shared hit=8
+               ->  Hash Join  (cost=8.34..24.04 rows=53 width=65) (actual time=0.979..1.014 rows=1 loops=1)
+                     Output: r.room_number, rc.category_name, b.booking_id, b.subtotal_amount, b.tax_amount, b.total_amount, b.check_out_date
+                     Inner Unique: true
+                     Hash Cond: (r.category_id = rc.category_id)
+                     Buffers: shared hit=8
+                     ->  Hash Join  (cost=7.22..22.66 rows=53 width=49) (actual time=0.823..0.852 rows=1 loops=1)
+                           Output: b.booking_id, b.subtotal_amount, b.tax_amount, b.total_amount, b.check_out_date, r.room_number, r.category_id
+                           Inner Unique: true
+                           Hash Cond: (b.room_id = r.room_id)
+                           Buffers: shared hit=7
+                           ->  Index Only Scan using idx_bookings_checkin_channel_covering on public.bookings b  (cost=0.41..15.49 rows=132 width=56) (actual time=0.290..0.321 rows=5 loops=1)
+                                 Output: b.check_in_date, b.booking_status, b.booking_channel, b.booking_id, b.guest_id, b.room_id, b.subtotal_amount, b.tax_amount, b.total_amount, b.check_out_date
+                                 Index Cond: ((b.check_in_date >= '2026-10-01'::date) AND (b.check_in_date <= '2026-10-31'::date))
+                                 Filter: ((b.booking_status)::text = ANY ('{CHECKED_OUT,CHECKED_IN}'::text[]))
+                                 Rows Removed by Filter: 1
+                                 Heap Fetches: 0
+                                 Buffers: shared hit=4
+                           ->  Hash  (cost=5.72..5.72 rows=87 width=25) (actual time=0.402..0.406 rows=87 loops=1)
+                                 Output: r.room_number, r.room_id, r.category_id
+                                 Buckets: 1024  Batches: 1  Memory Usage: 14kB
+                                 Buffers: shared hit=3
+                                 ->  Seq Scan on public.rooms r  (cost=0.00..5.72 rows=87 width=25) (actual time=0.037..0.233 rows=87 loops=1)
+                                       Output: r.room_number, r.room_id, r.category_id
+                                       Filter: ((r.wing)::text = 'EXECUTIVE_TOWER'::text)
+                                       Rows Removed by Filter: 131
+                                       Buffers: shared hit=3
+                     ->  Hash  (cost=1.05..1.05 rows=5 width=24) (actual time=0.101..0.104 rows=5 loops=1)
+                           Output: rc.category_name, rc.category_id
+                           Buckets: 1024  Batches: 1  Memory Usage: 9kB
+                           Buffers: shared hit=1
+                           ->  Seq Scan on public.room_categories rc  (cost=0.00..1.05 rows=5 width=24) (actual time=0.043..0.053 rows=5 loops=1)
+                                 Output: rc.category_name, rc.category_id
+                                 Buffers: shared hit=1
+ Planning:
+   Buffers: shared hit=83
+ Planning Time: 15.400 ms
+ Execution Time: 2.166 ms
+(50 rows)
+
