@@ -1,0 +1,42 @@
+Running Test 1: Atomic Room Reservation with Commit
+ dec_2026_bookings_for_a101 
+----------------------------
+                          0
+(1 row)
+
+ reservation_status |                     message                     |       booking_reference        |       payment_reference        | total_folio_charged | discount_applied 
+--------------------+-------------------------------------------------+--------------------------------+--------------------------------+---------------------+------------------
+ SUCCESS            | Reservation confirmed and settled for Room A101 | EKO-RES-20261112211324549-b8ef | EKO-PAY-20261112211324549-9c51 |         258187.5000 |       25500.0000
+(1 row)
+
+       booking_reference        | room_number | check_in_date | check_out_date | nightly_rate_applied | discount_amount | subtotal_amount | tax_amount | total_amount | booking_status |       payment_reference        | gateway_provider | amount_paid | payment_status 
+--------------------------------+-------------+---------------+----------------+----------------------+-----------------+-----------------+------------+--------------+----------------+--------------------------------+------------------+-------------+----------------
+ EKO-RES-20261112211324549-b8ef | A101        | 2026-12-01    | 2026-12-04     |           85000.0000 |      25500.0000 |     229500.0000 | 28687.5000 |  258187.5000 | CONFIRMED      | EKO-PAY-20261112211324549-9c51 | PAYSTACK         | 258187.5000 | COMPLETED
+(1 row)
+
+Running Test 2: Overlapping Dates Conflict Rollback
+psql:/portfolio-3/02-commit-rollback-tests.sql:72: NOTICE:  Rollback verified: Reservation rejected: Room A101 is already booked under reference EKO-RES-20261112211324549-b8ef for overlapping dates (2026-12-02 to 2026-12-05).
+DO
+ dec_2026_bookings_for_a101 
+----------------------------
+                          1
+(1 row)
+
+Running Test 3: OUT_OF_ORDER Maintenance Room Block
+ room_number |     wing      | room_status  
+-------------+---------------+--------------
+ C303        | ATLANTIC_WING | OUT_OF_ORDER
+(1 row)
+
+psql:/portfolio-3/02-commit-rollback-tests.sql:106: NOTICE:  Rollback verified: Reservation rejected: Room C303 is currently in OUT_OF_ORDER maintenance status.
+DO
+Running Test 4: Sub-transaction Savepoint Rollback
+psql:/portfolio-3/02-commit-rollback-tests.sql:139: NOTICE:  Leg 1 finished: SUCCESS (Ref: EKO-RES-20261112211324964-bd60)
+psql:/portfolio-3/02-commit-rollback-tests.sql:139: NOTICE:  Caught division by zero in add-on billing. Rolled back sub-operation 2 to savepoint.
+psql:/portfolio-3/02-commit-rollback-tests.sql:139: NOTICE:  Outer transaction committed. Leg 1 reservation for Room B202 preserved.
+DO
+       booking_reference        | room_number | check_in_date | check_out_date | total_amount | booking_status 
+--------------------------------+-------------+---------------+----------------+--------------+----------------
+ EKO-RES-20261112211324964-bd60 | B202        | 2026-12-05    | 2026-12-07     |  288562.5000 | CONFIRMED
+(1 row)
+
