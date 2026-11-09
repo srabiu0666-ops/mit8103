@@ -1,0 +1,16 @@
+Testing Non-Repeatable Read on Room Tariff (READ COMMITTED)
+psql:/portfolio-3/04-isolation-levels.sql:39: NOTICE:  Initial tariff read (T0): 135000.00 NGN
+psql:/portfolio-3/04-isolation-levels.sql:39: NOTICE:  Subsequent tariff read (T1): 150000.00 NGN
+psql:/portfolio-3/04-isolation-levels.sql:39: NOTICE:  Non-Repeatable read observed. Room tariff changed mid-transaction.
+DO
+Testing Snapshot Isolation (REPEATABLE READ)
+psql:/portfolio-3/04-isolation-levels.sql:51: NOTICE:  Snapshot occupied room count at start of Night Audit: 3 rooms
+psql:/portfolio-3/04-isolation-levels.sql:51: NOTICE:  REPEATABLE READ guarantees stable point-in-time snapshot views across financial Night Audit reports.
+DO
+Current Transaction Isolation Settings
+             name              |    setting     | unit |                          short_desc                           
+-------------------------------+----------------+------+---------------------------------------------------------------
+ default_transaction_isolation | read committed |      | Sets the transaction isolation level of each new transaction.
+ transaction_isolation         | read committed |      | Sets the current transaction's isolation level.
+(2 rows)
+

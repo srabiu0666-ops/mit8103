@@ -1,0 +1,20 @@
+ locktype | table_name | mode | granted | pid 
+----------+------------+------+---------+-----
+(0 rows)
+
+Testing Pessimistic Locking (SELECT FOR UPDATE) Against Double-Booking
+psql:/portfolio-3/03-concurrency-control.sql:59: NOTICE:  Executing Reservation Request 1 for Penthouse E502 (2026-12-20 to 2026-12-23)...
+psql:/portfolio-3/03-concurrency-control.sql:59: NOTICE:  Request 1 Result: SUCCESS (Ref: EKO-RES-20261112211327160-7cd9, Total: 1864687.5000 NGN)
+psql:/portfolio-3/03-concurrency-control.sql:59: NOTICE:  Executing Concurrent Reservation Request 2 for Penthouse E502 (2026-12-21 to 2026-12-24)...
+psql:/portfolio-3/03-concurrency-control.sql:59: NOTICE:  Request 2 rejected as expected under serialized room lock: Reservation rejected: Room E502 is already booked under reference EKO-RES-20261112211327160-7cd9 for overlapping dates (2026-12-21 to 2026-12-24).
+DO
+       booking_reference        | room_number |   booked_guest   | check_in_date | check_out_date | total_amount | booking_status 
+--------------------------------+-------------+------------------+---------------+----------------+--------------+----------------
+ EKO-RES-20261112211327160-7cd9 | E502        | Ibrahim Suleiman | 2026-12-20    | 2026-12-23     | 1864687.5000 | CONFIRMED
+(1 row)
+
+Testing Optimistic Concurrency Control (OCC) on Room Housekeeping Status
+psql:/portfolio-3/03-concurrency-control.sql:118: NOTICE:  Agent 1 read Room A103 version token: 2026-11-12 20:59:42.437792+00
+psql:/portfolio-3/03-concurrency-control.sql:118: NOTICE:  Concurrent Agent 2 update committed (A103 -> AVAILABLE).
+psql:/portfolio-3/03-concurrency-control.sql:118: NOTICE:  OCC Conflict detected: 0 rows updated because Room A103 was modified concurrently.
+DO

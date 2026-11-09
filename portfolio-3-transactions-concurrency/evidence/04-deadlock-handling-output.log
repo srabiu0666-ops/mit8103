@@ -1,0 +1,23 @@
+PostgreSQL Deadlock Configuration
+       name        | setting | unit |                          short_desc                           
+-------------------+---------+------+---------------------------------------------------------------
+ deadlock_timeout  | 1000    | ms   | Sets the time to wait on a lock before checking for deadlock.
+ lock_timeout      | 0       | ms   | Sets the maximum allowed duration of any wait for a lock.
+ statement_timeout | 0       | ms   | Sets the maximum allowed duration of any statement.
+(3 rows)
+
+Testing Multi-Room Group Bookings with Deterministic Lock Ordering
+psql:/portfolio-3/05-deadlock-handling.sql:53: NOTICE:  Group Booking 1: Requesting (D402 then D403) for 2026-12-10 to 2026-12-12
+psql:/portfolio-3/05-deadlock-handling.sql:53: NOTICE:  Group Booking 1 completed: SUCCESS | Lock Order: D402 -> D403 | Combined Total: 1071000.0000 NGN
+psql:/portfolio-3/05-deadlock-handling.sql:53: NOTICE:  Group Booking 2 (Reverse Input Order): Requesting (D403 then D402) for 2026-12-15 to 2026-12-17
+psql:/portfolio-3/05-deadlock-handling.sql:53: NOTICE:  Group Booking 2 completed: SUCCESS | Lock Order: D402 -> D403 | Combined Total: 1071000.0000 NGN
+psql:/portfolio-3/05-deadlock-handling.sql:53: NOTICE:  Both multi-room bookings acquired locks in identical ascending order (D402 -> D403) with zero deadlocks.
+DO
+       booking_reference        | room_number | check_in_date | check_out_date | total_amount | booking_status 
+--------------------------------+-------------+---------------+----------------+--------------+----------------
+ EKO-RES-20261112211331729-4e09 | D402        | 2026-12-10    | 2026-12-12     |  535500.0000 | CONFIRMED
+ EKO-RES-20261112211331729-e0ce | D403        | 2026-12-10    | 2026-12-12     |  535500.0000 | CONFIRMED
+ EKO-RES-20261112211331729-fc0d | D402        | 2026-12-15    | 2026-12-17     |  535500.0000 | CONFIRMED
+ EKO-RES-20261112211331729-cf90 | D403        | 2026-12-15    | 2026-12-17     |  535500.0000 | CONFIRMED
+(4 rows)
+
