@@ -1,0 +1,250 @@
+Pipeline 1: Smart-Lock Security & Foreign Access Surveillance
+[
+  {
+    room_number: 'E501',
+    guest_id: 'a0000000-0000-0000-0000-000000000011',
+    device_id: 'API-BOT-LINUX-X86',
+    ip_address: '185.220.101.5',
+    event_type: 'KEYCARD_TAP_DENIED',
+    access_channel: 'REMOTE_WEB_API',
+    timestamp: ISODate('2026-10-18T02:13:15.000Z'),
+    location: 'Frankfurt, Germany',
+    vpn_detected: true
+  },
+  {
+    room_number: 'D402',
+    guest_id: 'a0000000-0000-0000-0000-000000000011',
+    device_id: 'API-BOT-LINUX-X86',
+    ip_address: '185.220.101.5',
+    event_type: 'KEYCARD_TAP_DENIED',
+    access_channel: 'REMOTE_WEB_API',
+    timestamp: ISODate('2026-10-18T02:12:30.000Z'),
+    location: 'Frankfurt, Germany',
+    vpn_detected: true
+  },
+  {
+    room_number: 'C303',
+    guest_id: 'a0000000-0000-0000-0000-000000000011',
+    device_id: 'RFID-CLONE-CARD-099',
+    ip_address: '197.210.45.88',
+    event_type: 'KEYCARD_TAP_DENIED',
+    access_channel: 'RFID_KEYCARD',
+    timestamp: ISODate('2026-10-18T02:00:00.000Z'),
+    location: 'Lagos, Nigeria',
+    vpn_detected: false
+  }
+]
+Pipeline 2: Guest Device & Room Access Velocity
+[
+  {
+    total_telemetry_events: 3,
+    latest_activity: ISODate('2026-10-18T02:13:15.000Z'),
+    guest_id: 'a0000000-0000-0000-0000-000000000011',
+    rooms_count: 3,
+    rooms_targeted: [
+      'D402',
+      'E501',
+      'C303'
+    ],
+    devices_used: [
+      'RFID-CLONE-CARD-099',
+      'API-BOT-LINUX-X86'
+    ],
+    channels_used: [
+      'RFID_KEYCARD',
+      'REMOTE_WEB_API'
+    ],
+    cities: [
+      'Lagos',
+      'Frankfurt'
+    ],
+    avg_cabin_temp_c: 22.1
+  },
+  {
+    total_telemetry_events: 2,
+    latest_activity: ISODate('2026-10-13T21:00:00.000Z'),
+    guest_id: 'a0000000-0000-0000-0000-000000000005',
+    rooms_count: 1,
+    rooms_targeted: [
+      'B201'
+    ],
+    devices_used: [
+      'BLE-GALAXYS24-OKAFOR',
+      'TABLET-WALL-B201'
+    ],
+    channels_used: [
+      'IN_ROOM_TABLET',
+      'BLE_MOBILE_KEY'
+    ],
+    cities: [
+      'Lagos'
+    ],
+    avg_cabin_temp_c: 21.2
+  },
+  {
+    total_telemetry_events: 2,
+    latest_activity: ISODate('2026-10-12T13:15:30.000Z'),
+    guest_id: 'a0000000-0000-0000-0000-000000000003',
+    rooms_count: 1,
+    rooms_targeted: [
+      'D402'
+    ],
+    devices_used: [
+      'TABLET-WALL-D402',
+      'BLE-IPHONE16PRO-SULEIMAN'
+    ],
+    channels_used: [
+      'IN_ROOM_TABLET',
+      'BLE_MOBILE_KEY'
+    ],
+    cities: [
+      'Lagos'
+    ],
+    avg_cabin_temp_c: 20.5
+  },
+  {
+    total_telemetry_events: 1,
+    latest_activity: ISODate('2026-10-14T10:20:00.000Z'),
+    guest_id: 'a0000000-0000-0000-0000-000000000006',
+    rooms_count: 1,
+    rooms_targeted: [
+      'C301'
+    ],
+    devices_used: [
+      'RFID-READER-C301'
+    ],
+    channels_used: [
+      'RFID_KEYCARD'
+    ],
+    cities: [
+      'Abuja'
+    ],
+    avg_cabin_temp_c: 21
+  }
+]
+Pipeline 3: Concierge & Security Resolution Action Breakdown
+[
+  {
+    resolution_action: 'KEYCARD_TOKEN_REVOKE',
+    frequency: 1,
+    avg_priority_score: 96,
+    tickets: [
+      'TKT-2026-OCT-001'
+    ],
+    rooms: [
+      'D402'
+    ]
+  },
+  {
+    resolution_action: 'GUEST_PROFILE_BLACKLIST',
+    frequency: 1,
+    avg_priority_score: 96,
+    tickets: [
+      'TKT-2026-OCT-001'
+    ],
+    rooms: [
+      'D402'
+    ]
+  },
+  {
+    resolution_action: 'FIREWALL_IP_BLOCK',
+    frequency: 1,
+    avg_priority_score: 96,
+    tickets: [
+      'TKT-2026-OCT-001'
+    ],
+    rooms: [
+      'D402'
+    ]
+  },
+  {
+    resolution_action: 'HVAC_VALVE_ORDERED',
+    frequency: 1,
+    avg_priority_score: 85,
+    tickets: [
+      'TKT-2026-OCT-003'
+    ],
+    rooms: [
+      'C303'
+    ]
+  },
+  {
+    resolution_action: 'ROOM_MARKED_OUT_OF_ORDER',
+    frequency: 1,
+    avg_priority_score: 85,
+    tickets: [
+      'TKT-2026-OCT-003'
+    ],
+    rooms: [
+      'C303'
+    ]
+  },
+  {
+    resolution_action: 'BUTLER_TRAY_DELIVERED',
+    frequency: 1,
+    avg_priority_score: 65,
+    tickets: [
+      'TKT-2026-OCT-002'
+    ],
+    rooms: [
+      'D402'
+    ]
+  },
+  {
+    resolution_action: 'FOLIO_POSTED',
+    frequency: 1,
+    avg_priority_score: 65,
+    tickets: [
+      'TKT-2026-OCT-002'
+    ],
+    rooms: [
+      'D402'
+    ]
+  }
+]
+Pipeline 4: Multi-Faceted Smart Hotel Operations Dashboard
+[
+  {
+    access_channel_distribution: [
+      {
+        _id: 'RFID_KEYCARD',
+        count: 2
+      },
+      {
+        _id: 'BLE_MOBILE_KEY',
+        count: 2
+      },
+      {
+        _id: 'IN_ROOM_TABLET',
+        count: 2
+      },
+      {
+        _id: 'REMOTE_WEB_API',
+        count: 2
+      }
+    ],
+    event_type_summary: [
+      {
+        _id: 'DIGITAL_KEY_UNLOCK',
+        count: 3
+      },
+      {
+        _id: 'KEYCARD_TAP_DENIED',
+        count: 3
+      },
+      {
+        _id: 'DO_NOT_DISTURB_TOGGLE',
+        count: 1
+      },
+      {
+        _id: 'HVAC_SETPOINT_CHANGE',
+        count: 1
+      }
+    ],
+    anomalous_vpn_events: [
+      {
+        total_vpn_attempts: 2
+      }
+    ]
+  }
+]
