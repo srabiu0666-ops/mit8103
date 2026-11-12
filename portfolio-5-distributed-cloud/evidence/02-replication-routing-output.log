@@ -1,0 +1,58 @@
+psql:/portfolio-5/02-replication-read-write-split.sql:7: NOTICE:  function fn_route_ekostay_query(text,pg_catalog.varchar,pg_catalog.bool) does not exist, skipping
+DROP FUNCTION
+psql:/portfolio-5/02-replication-read-write-split.sql:8: NOTICE:  table "distributed_cluster_nodes" does not exist, skipping
+DROP TABLE
+DROP PUBLICATION
+1. Configuring EkoStay Multi-Region Cluster Topology Registry
+psql:/portfolio-5/02-replication-read-write-split.sql:9: NOTICE:  publication "ekostay_crs_pub" does not exist, skipping
+CREATE TABLE
+INSERT 0 4
+        node_id        |         region          |     node_role      | replication_mode | measured_lag_ms | node_status 
+-----------------------+-------------------------+--------------------+------------------+-----------------+-------------
+ ekostay-pg-primary-01 | NG-Lagos (Local Zone)   | PRIMARY_WRITER     | PRIMARY          |            0.00 | HEALTHY
+ ekostay-pg-standby-02 | NG-Lagos (Victoria Isl) | SYNC_STANDBY       | SYNCHRONOUS      |            1.35 | HEALTHY
+ ekostay-pg-replica-03 | NG-Abuja (Maitama Hub)  | ASYNC_READ_REPLICA | ASYNCHRONOUS     |           13.60 | HEALTHY
+ ekostay-pg-dr-04      | EU-West (Ireland DR)    | ASYNC_READ_REPLICA | ASYNCHRONOUS     |           66.80 | HEALTHY
+(4 rows)
+
+2. Creating Logical Replication Publication for Core CRS/PMS Tables
+psql:/portfolio-5/02-replication-read-write-split.sql:48: WARNING:  wal_level is insufficient to publish logical changes
+HINT:  Set wal_level to "logical" before creating subscriptions.
+CREATE PUBLICATION
+     pubname     | puballtables | pubinsert | pubupdate | pubdelete 
+-----------------+--------------+-----------+-----------+-----------
+ ekostay_crs_pub | f            | t         | t         | f
+(1 row)
+
+     pubname     | schemaname |        tablename         
+-----------------+------------+--------------------------
+ ekostay_crs_pub | public     | bookings
+ ekostay_crs_pub | public     | checkin_checkout_records
+ ekostay_crs_pub | public     | payments
+ ekostay_crs_pub | public     | rooms
+(4 rows)
+
+3. Inspecting Live PostgreSQL WAL Position and Recovery Role
+ is_read_replica |    active_engine_role     | current_wal_lsn | active_wal_segment_file  | configured_wal_level | max_wal_senders 
+-----------------+---------------------------+-----------------+--------------------------+----------------------+-----------------
+ f               | PRIMARY_READ_WRITE_LEADER | 0/470A228       | 000000010000000000000004 | replica              | 10
+(1 row)
+
+4. Implementing Read-Write Query Router Function (PgBouncer / HAProxy Routing Logic)
+CREATE FUNCTION
+5. Verifying Read-Write Splitting Across EkoStay Hospitality Workloads
+   selected_node_id    |    selected_region    | selected_role  |                 endpoint                  |                                          routing_reason                                           
+-----------------------+-----------------------+----------------+-------------------------------------------+---------------------------------------------------------------------------------------------------
+ ekostay-pg-primary-01 | NG-Lagos (Local Zone) | PRIMARY_WRITER | pg-primary.lagos.internal.ekostay.ng:5432 | Write/Lock operation detected: routed strictly to Primary Writer with synchronous standby commit.
+(1 row)
+
+   selected_node_id    |     selected_region     | selected_role |                 endpoint                  |                                               routing_reason                                               
+-----------------------+-------------------------+---------------+-------------------------------------------+------------------------------------------------------------------------------------------------------------
+ ekostay-pg-standby-02 | NG-Lagos (Victoria Isl) | SYNC_STANDBY  | pg-standby.lagos.internal.ekostay.ng:5432 | Session consistency required (Read-Your-Own-Writes after reservation): routed to Sync Standby (lag < 2ms).
+(1 row)
+
+   selected_node_id    |    selected_region     |   selected_role    |                 endpoint                  |                                              routing_reason                                               
+-----------------------+------------------------+--------------------+-------------------------------------------+-----------------------------------------------------------------------------------------------------------
+ ekostay-pg-replica-03 | NG-Abuja (Maitama Hub) | ASYNC_READ_REPLICA | pg-replica.abuja.internal.ekostay.ng:5432 | Read-only analytical workload (NIGHT_AUDIT_REVPAR_ANALYTICS): offloaded to lowest-lag Async Read Replica.
+(1 row)
+
