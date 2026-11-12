@@ -1,0 +1,82 @@
+DROP TABLE
+DROP TABLE
+1. Creating Monthly Range-Partitioned Reservation Table (bookings_partitioned)
+CREATE TABLE
+CREATE TABLE
+CREATE TABLE
+CREATE TABLE
+CREATE TABLE
+CREATE TABLE
+CREATE TABLE
+CREATE TABLE
+CREATE TABLE
+CREATE TABLE
+CREATE INDEX
+CREATE INDEX
+INSERT 0 15015
+ANALYZE
+2. Inspecting Tuple Distribution Across Monthly Partitions
+   partition_name   |              partition_range_bound               | tuple_count | total_size 
+--------------------+--------------------------------------------------+-------------+------------
+ bookings_p2026_05  | FOR VALUES FROM ('2026-05-01') TO ('2026-06-01') |        2625 | 1352 kB
+ bookings_p2026_06  | FOR VALUES FROM ('2026-06-01') TO ('2026-07-01') |        2434 | 1288 kB
+ bookings_p2026_07  | FOR VALUES FROM ('2026-07-01') TO ('2026-08-01') |        2573 | 1376 kB
+ bookings_p2026_08  | FOR VALUES FROM ('2026-08-01') TO ('2026-09-01') |        2639 | 1416 kB
+ bookings_p2026_09  | FOR VALUES FROM ('2026-09-01') TO ('2026-10-01') |        2498 | 1328 kB
+ bookings_p2026_10  | FOR VALUES FROM ('2026-10-01') TO ('2026-11-01') |        2237 | 1192 kB
+ bookings_p2026_11  | FOR VALUES FROM ('2026-11-01') TO ('2026-12-01') |           2 | 72 kB
+ bookings_p2026_12  | FOR VALUES FROM ('2026-12-01') TO ('2027-01-01') |           7 | 72 kB
+ bookings_p_default | DEFAULT                                          |           0 | 32 kB
+(9 rows)
+
+3. Creating 4-Way Hash-Sharded Room Inventory Table (rooms_sharded)
+CREATE TABLE
+CREATE TABLE
+CREATE TABLE
+CREATE TABLE
+CREATE TABLE
+INSERT 0 218
+ANALYZE
+4. Verifying Uniform Hash Sharding Balance Across 4 Property Nodes
+ shard_partition | rooms_hosted | distribution_pct | daily_inventory_capacity_ngn 
+-----------------+--------------+------------------+------------------------------
+ rooms_shard_00  |           63 |            28.90 |                  15810000.00
+ rooms_shard_01  |           47 |            21.56 |                  10925000.00
+ rooms_shard_02  |           49 |            22.48 |                  15405000.00
+ rooms_shard_03  |           59 |            27.06 |                  14855000.00
+(4 rows)
+
+5. Benchmarking Partition Pruning on October 2026 Channel Revenue Audit
+                                                                                        QUERY PLAN                                                                                        
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Sort  (cost=128.46..128.52 rows=25 width=63) (actual time=25.859..25.872 rows=8 loops=1)
+   Sort Key: (sum(bookings_partitioned.total_amount)) DESC
+   Sort Method: quicksort  Memory: 25kB
+   Buffers: shared hit=64
+   ->  HashAggregate  (cost=127.56..127.88 rows=25 width=63) (actual time=25.659..25.698 rows=8 loops=1)
+         Group Key: bookings_partitioned.booking_channel, bookings_partitioned.booking_status
+         Batches: 1  Memory Usage: 24kB
+         Buffers: shared hit=64
+         ->  Seq Scan on bookings_p2026_10 bookings_partitioned  (cost=0.00..105.94 rows=2162 width=30) (actual time=0.099..11.674 rows=2162 loops=1)
+               Filter: ((check_in_date >= '2026-10-01'::date) AND (check_in_date < '2026-11-01'::date) AND ((booking_status)::text = ANY ('{CHECKED_OUT,CHECKED_IN,CONFIRMED}'::text[])))
+               Rows Removed by Filter: 75
+               Buffers: shared hit=64
+ Planning:
+   Buffers: shared hit=143
+ Planning Time: 36.901 ms
+ Execution Time: 26.242 ms
+(16 rows)
+
+6. Verifying Single-Shard Targeting on Room Code Lookup (Room A101)
+                                                      QUERY PLAN                                                       
+-----------------------------------------------------------------------------------------------------------------------
+ Seq Scan on rooms_shard_01 rooms_sharded  (cost=0.00..1.59 rows=1 width=68) (actual time=0.086..1.824 rows=1 loops=1)
+   Filter: (room_number = 'A101'::bpchar)
+   Rows Removed by Filter: 46
+   Buffers: shared hit=1
+ Planning:
+   Buffers: shared hit=15
+ Planning Time: 6.865 ms
+ Execution Time: 1.939 ms
+(8 rows)
+
