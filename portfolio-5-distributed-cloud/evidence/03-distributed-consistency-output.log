@@ -1,0 +1,38 @@
+psql:/portfolio-5/03-distributed-cap-pacelc-verification.sql:6: NOTICE:  table "distributed_idempotency_registry" does not exist, skipping
+DROP TABLE
+1. Evaluating PACELC Tunable Consistency Modes in PostgreSQL (synchronous_commit)
+DO
+2. Implementing Idempotent Payment & OTA Webhook Registry (Network Partition Recovery)
+psql:/portfolio-5/03-distributed-cap-pacelc-verification.sql:40: NOTICE:  [CP / PC-EC Mode] synchronous_commit = on | Used for room reservations, keycard check-ins & Paystack/NIP settlements.
+psql:/portfolio-5/03-distributed-cap-pacelc-verification.sql:40: NOTICE:  [Local Durable Mode] synchronous_commit = local | Used for guest profile preferences & special request notes.
+psql:/portfolio-5/03-distributed-cap-pacelc-verification.sql:40: NOTICE:  [AP / PA-EL Mode] synchronous_commit = off | Used for non-monetary room search clickstreams & IoT heartbeat logs.
+psql:/portfolio-5/03-distributed-cap-pacelc-verification.sql:40: NOTICE:  WAL LSN verified at 0/470DFC0
+CREATE TABLE
+3. Testing Distributed Webhook Retry & Idempotency Guard under Network Partition
+psql:/portfolio-5/03-distributed-cap-pacelc-verification.sql:90: NOTICE:  Webhook Delivery 1: Processed cleanly on ekostay-pg-primary-01.
+psql:/portfolio-5/03-distributed-cap-pacelc-verification.sql:90: NOTICE:  Webhook Delivery 2 (Duplicate Retry): Intercepted by idempotency constraint. Zero duplicate room booking or double-charge.
+DO
+      idempotency_key      |    gateway_session_id     | room_number | folio_amount |   originating_node    | settlement_status | retry_attempts | original_booking_ref 
+---------------------------+---------------------------+-------------+--------------+-----------------------+-------------------+----------------+----------------------
+ IDEMP-PSK-20261030-004419 | PSK_20261030142000_004419 | D401        |  850500.0000 | ekostay-pg-primary-01 | PROCESSED         |              1 | EKO-RES-IDEMP-001
+(1 row)
+
+4. Simulating Primary Node Failure & Automated Standby Failover Promotion
+psql:/portfolio-5/03-distributed-cap-pacelc-verification.sql:130: NOTICE:  ALERT: Primary node ekostay-pg-primary-01 marked OFFLINE (missed 3 Patroni etcd heartbeats).
+psql:/portfolio-5/03-distributed-cap-pacelc-verification.sql:130: NOTICE:  FAILOVER COMPLETE: Promoted ekostay-pg-standby-02 to PRIMARY_WRITER | RTO: 16.80s | RPO: 0.00ms (Zero reservation data loss).
+DO
+        node_id        |         region          |     node_role      | replication_mode | measured_lag_ms | node_status 
+-----------------------+-------------------------+--------------------+------------------+-----------------+-------------
+ ekostay-pg-standby-02 | NG-Lagos (Victoria Isl) | PRIMARY_WRITER     | PRIMARY          |            0.00 | HEALTHY
+ ekostay-pg-replica-03 | NG-Abuja (Maitama Hub)  | ASYNC_READ_REPLICA | ASYNCHRONOUS     |           13.60 | HEALTHY
+ ekostay-pg-dr-04      | EU-West (Ireland DR)    | ASYNC_READ_REPLICA | ASYNCHRONOUS     |           66.80 | HEALTHY
+ ekostay-pg-primary-01 | NG-Lagos (Local Zone)   | PRIMARY_WRITER     | PRIMARY          |            0.00 | OFFLINE
+(4 rows)
+
+   selected_node_id    |     selected_region     | selected_role  |                 endpoint                  |                                          routing_reason                                           
+-----------------------+-------------------------+----------------+-------------------------------------------+---------------------------------------------------------------------------------------------------
+ ekostay-pg-standby-02 | NG-Lagos (Victoria Isl) | PRIMARY_WRITER | pg-standby.lagos.internal.ekostay.ng:5432 | Write/Lock operation detected: routed strictly to Primary Writer with synchronous standby commit.
+(1 row)
+
+UPDATE 1
+UPDATE 1
